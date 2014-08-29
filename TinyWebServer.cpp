@@ -4,7 +4,9 @@
 // Date: May 2010
 //
 // Updated: 08-JAN-2012 for Arduno IDE 1.0 by <Hardcore@hardcoreforensics.com>
+// Updated: 30-AUG-2012 for unlock some locking functions by <alberto@panu.it>
 // Updated: 29-MAR-2013 replacing strtoul with parseHexChar by <shin@marcsi.ch>
+// Updated: 27-AUG-2014 added function get_jsonpid_from_path() by <stexe@systemfailure.it>
 //
 // TinyWebServer for Arduino.
 //
@@ -21,6 +23,7 @@
 // when the debugging is enabled and debugging lines are preceded by 'TWS:'
 
 #define DEBUG 0
+#define READ_TIMEOUT 10
 
 #include "Arduino.h"
 
@@ -124,13 +127,18 @@ boolean TinyWebServer::process_headers() {
   char ch;
   int pos;
   const char* header;
+  uint32_t start_time = millis();
   while (1) {
     if (should_stop_processing()) {
+      return false;
+    }
+    if (millis() - start_time > READ_TIMEOUT) {
       return false;
     }
     if (!read_next_char(client_, (uint8_t*)&ch)) {
       continue;
     }
+    start_time = millis();
 #if DEBUG
     Serial.print(ch);
 #endif
@@ -446,6 +454,25 @@ char* TinyWebServer::get_file_from_path(const char* path) {
   return decoded;
 }
 
+char* TinyWebServer::get_jsonpid_from_path(const char* path) {
+  // Obtain the last path component.
+  const char* encoded_fname = strrchr(path, 'jsonp');
+  if (!encoded_fname) {
+    return NULL;
+  } else {
+    // Skip past the '/'.
+    encoded_fname++;
+  }
+  char* decoded = decode_url_encoded(encoded_fname);
+  if (!decoded) {
+    return NULL;
+  }
+  for (char* p = decoded; *p; p++) {
+    *p = toupper(*p);
+  }
+  return decoded;
+}
+
 TinyWebServer::MimeType TinyWebServer::get_mime_type_from_filename(
     const char* filename) {
   MimeType r = text_html_content_type;
@@ -521,7 +548,11 @@ boolean TinyWebServer::get_line(char* buffer, int size) {
   char ch;
 
   buffer[0] = 0;
+  uint32_t start_time = millis();
   for (; i < size - 1; i++) {
+    if (millis() - start_time > READ_TIMEOUT) {
+    	return i < size - 1;
+    }
     if (!read_next_char(client_, (uint8_t*)&ch)) {
       continue;
     }
@@ -529,6 +560,7 @@ boolean TinyWebServer::get_line(char* buffer, int size) {
       break;
     }
     buffer[i] = ch;
+    start_time = millis();
   }
   buffer[i] = 0;
   return i < size - 1;
