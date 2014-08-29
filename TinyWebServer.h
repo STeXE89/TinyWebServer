@@ -4,6 +4,7 @@
 // Date: May, June 2010
 //
 // Updated: 08-JAN-2012 for Arduno IDE 1.0 by <Hardcore@hardcoreforensics.com>
+// Updated: 27-AUG-2014 added function get_jsonpid_from_path() by <stexe@systemfailure.it>
 //
 // TinyWebServer for Arduino.
 
@@ -125,6 +126,9 @@ public:
   //
   // The returned string must be free()d by the caller.
   static char* get_file_from_path(const char* path);
+  
+  // Get JSONP from path
+  static char* get_jsonpid_from_path(const char* path);
 
   // Guesses a MIME type based on the extension of `filename'. If none
   // could be guessed, the equivalent of text/html is returned.
