@@ -78,7 +78,7 @@ boolean jsonp_handler(TinyWebServer& web_server) {
   web_server << (digitalRead(7));
   web_server << F("\"}");
   web_server << F("]})");
-
+  free(jsonp);
   return true;
 }
 
